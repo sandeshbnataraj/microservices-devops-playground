@@ -1,0 +1,16 @@
+stages:
+  - build
+  - test
+  - deploy
+
+dev:playground:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock" 
+    - docker buildx create --name my-builder --driver docker-container --bootstrap --use
+    - docker buildx inspect
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/dev-playground --push .
