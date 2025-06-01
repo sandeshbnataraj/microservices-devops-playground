@@ -1,3 +1,23 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+
+	"cloud.google.com/go/profiler"
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+)
+
+const port = "8080"
+
 func main() {
 	ctx := context.Background()
 	log := logrus.New()
@@ -12,38 +32,61 @@ func main() {
 	}
 	log.Out = os.Stdout
 
-	svc := new(frontendServer)
-
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{}, propagation.Baggage{}))
 
-	baseUrl = os.Getenv("BASE_URL")
-	srvPort := port
-	if os.Getenv("PORT") != "" {
-		srvPort = os.Getenv("PORT")
+	if os.Getenv("ENABLE_TRACING") == "1" {
+		log.Info("Tracing enabled.")
+		initTracing(log, ctx)
+	} else {
+		log.Info("Tracing disabled.")
 	}
-	addr := os.Getenv("LISTEN_ADDR")
 
-	// -----------------------------
-	// DUMMY MODE STARTS HERE 🧪
-	// -----------------------------
+	if os.Getenv("ENABLE_PROFILER") == "1" {
+		log.Info("Profiling enabled.")
+		go initProfiling(log, "frontend", "1.0.0")
+	} else {
+		log.Info("Profiling disabled.")
+	}
 
+	// Dummy mode: define only a simple handler
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "🎉 Frontend is up — dummy mode!")
+		fmt.Fprintln(w, "🎉 Frontend is up — dummy mode")
 	})
 
-	// optional: add /_healthz so health checks pass
-	r.HandleFunc("/_healthz", func(w http.ResponseWriter, _ *http.Request) {
-		fmt.Fprint(w, "ok")
-	})
+	handler := otelhttp.NewHandler(r, "frontend")
 
-	var handler http.Handler = r
-	handler = &logHandler{log: log, next: handler}
-	handler = ensureSessionID(handler)
-	handler = otelhttp.NewHandler(handler, "frontend")
+	addr := ":" + port
+	log.Infof("starting dummy server on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, handler))
+}
 
-	log.Infof("🌍 Starting dummy frontend server at http://%s:%s", addr, srvPort)
-	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
+func initTracing(log logrus.FieldLogger, ctx context.Context) (*sdktrace.TracerProvider, error) {
+	// Stubbed for dummy mode — not connecting to collector
+	log.Warn("Skipping real trace exporter setup (dummy mode)")
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	otel.SetTracerProvider(tp)
+	return tp, nil
+}
+
+func initProfiling(log logrus.FieldLogger, service, version string) {
+	for i := 1; i <= 3; i++ {
+		log = log.WithField("retry", i)
+		if err := profiler.Start(profiler.Config{
+			Service:        service,
+			ServiceVersion: version,
+		}); err != nil {
+			log.Warnf("warn: failed to start profiler: %+v", err)
+		} else {
+			log.Info("started Stackdriver profiler")
+			return
+		}
+		d := time.Second * 10 * time.Duration(i)
+		log.Debugf("sleeping %v to retry initializing Stackdriver profiler", d)
+		time.Sleep(d)
+	}
+	log.Warn("warning: could not initialize Stackdriver profiler after retrying, giving up")
 }
