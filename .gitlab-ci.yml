@@ -13,4 +13,4 @@ dev:playground:
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock" 
     - docker buildx create --name my-builder --driver docker-container --bootstrap --use
     - docker buildx inspect
-    - docker buildx build --tag $CI_REGISTRY_IMAGE/dev-playground --push .
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/dev-playground --push -f Dockerfile.dev .
