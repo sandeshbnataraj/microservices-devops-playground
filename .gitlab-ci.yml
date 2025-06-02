@@ -11,7 +11,7 @@ docker:build:shippingservice:
   script:
     - echo "building shippins service..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker context use default || docker context create default --docker host=unix:///var/run/docker.sock"
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
 
