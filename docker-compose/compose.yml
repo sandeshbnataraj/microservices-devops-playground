@@ -1,0 +1,12 @@
+services:
+  
+  shippingservice:
+    #build:
+    #  context: ./src/shippingservice
+    #  dockerfile: Dockerfile
+    #image: 
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 50051:50051
