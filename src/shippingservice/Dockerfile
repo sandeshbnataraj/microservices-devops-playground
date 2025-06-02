@@ -3,10 +3,10 @@ FROM golang:1.24
 WORKDIR /app
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
-COPY ./src/shippingservice/go.mod  ./src/shippingservice/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY ./src/shippingservice ./
+COPY . ./
 
 # it will build a binary for the application as shipping-app which can be run like ./shipping-app
 RUN go build -v -o shipping-app
