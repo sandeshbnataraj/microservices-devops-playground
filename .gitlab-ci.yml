@@ -4,7 +4,7 @@ stages:
   - deploy
 
 
-docker:build:productcatalogservice:
+.docker:build:productcatalogservice:
   stage: build
   image: docker:28.2
   services:
@@ -28,7 +28,7 @@ docker:build:productcatalogservice:
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
 
-.dev:playground:
+dev:playground:
   stage: build
   image: docker:28.2
   services:
