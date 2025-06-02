@@ -3,7 +3,20 @@ stages:
   - test
   - deploy
 
-docker:build:shippingservice:
+
+docker:build:productcatalogservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building shippins service..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name productcatalogservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/productcatalogservice --push ./src/productcatalogservice
+
+.docker:build:shippingservice:
   stage: build
   image: docker:28.2
   services:
