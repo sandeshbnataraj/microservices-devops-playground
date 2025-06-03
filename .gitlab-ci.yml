@@ -3,6 +3,18 @@ stages:
   - test
   - deploy
 
+docker:build:recommendationservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building shoppingassistantservice..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name recommendationservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:recommendationservice --push ./src/recommendationservice/
+
 .docker:build:checkoutservice:
   stage: build
   image: docker:28.2
@@ -75,7 +87,7 @@ stages:
     - docker buildx create --name cartservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:cartservice --push ./src/cartservice/src/
 
-docker:build:currencyservice:
+.docker:build:currencyservice:
   stage: build
   image: docker:28.2
   services:
@@ -87,7 +99,7 @@ docker:build:currencyservice:
     - docker buildx create --name currencyservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:currencyservice --push ./src/currencyservice
 
-docker:build:productcatalogservice:
+.docker:build:productcatalogservice:
   stage: build
   image: docker:28.2
   services:
@@ -99,7 +111,7 @@ docker:build:productcatalogservice:
     - docker buildx create --name productcatalogservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:productcatalogservice --push ./src/productcatalogservice
 
-docker:build:shippingservice:
+.docker:build:shippingservice:
   stage: build
   image: docker:28.2
   services:

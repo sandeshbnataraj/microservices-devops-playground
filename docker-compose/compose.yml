@@ -1,8 +1,63 @@
 services:
   
+  frontend:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:frontend
+    restart: unless-stopped
+    depends_on:
+      - productcatalogservice
+      - currencyservice
+      - cartservice
+      - checkoutservice
+    networks:
+      - front-tier
+    ports:
+      - 8080:8080
+    environment:
+      #- BASE_URL=""
+      #- ENABLE_TRACING="0"
+      #- ENABLE_PROFILER="0"
+      - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000
+      - CART_SERVICE_ADDR=cartservice:80
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8082
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:80
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051
+      - AD_SERVICE_ADDR=
+      #- SHOPPING_ASSISTANT_SERVICE_ADDR=
+
+  adservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:adservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    
+  #shoppingassistantservice:
+  #  image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:shoppingassistantservice
+  #  restart: unless-stopped
+  #  networks:
+  #    - front-tier
+    
+
+  recommendationservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:recommendationservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 8082:8082
+    environment:
+      #- GCP_PROJECT_ID=""
+      #- DISABLE_PROFILER=""
+      #- ENABLE_TRACING="1"
+      #- COLLECTOR_SERVICE_ADDR=""
+      - PORT=8082
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+
   checkoutservice:
-    build:
-      context: ../src/checkoutservice/
+    #build:
+    #  context: ../src/checkoutservice/
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:checkoutservice
     restart: unless-stopped
     depends_on:
       - shippingservice
