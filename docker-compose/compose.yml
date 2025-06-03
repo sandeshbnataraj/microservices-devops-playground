@@ -16,6 +16,7 @@ services:
       #- BASE_URL=""
       #- ENABLE_TRACING="0"
       #- ENABLE_PROFILER="0"
+      - LISTEN_ADDR="0.0.0.0"
       - PORT=8080
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
       - CURRENCY_SERVICE_ADDR=currencyservice:7000
