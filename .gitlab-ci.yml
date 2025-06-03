@@ -3,6 +3,18 @@ stages:
   - test
   - deploy
 
+docker:build:emailservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building emailservice..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name emailservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:emailservice --push ./src/emailservice/
+
 .docker:build:cartservice:
   stage: build
   image: docker:28.2
@@ -51,7 +63,7 @@ stages:
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
 
-dev:playground:
+.dev:playground:
   stage: build
   image: docker:28.2
   services:
