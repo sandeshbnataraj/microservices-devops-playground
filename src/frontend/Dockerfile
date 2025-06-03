@@ -10,4 +10,3 @@ COPY . ./
 RUN go build -v -o /usr/local/bin/app
 
 CMD ["app"]
-

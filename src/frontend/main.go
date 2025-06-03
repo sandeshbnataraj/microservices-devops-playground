@@ -84,7 +84,7 @@ type frontendServer struct {
 	collectorAddr string
 	collectorConn *grpc.ClientConn
 
-	//shoppingAssistantSvcAddr string
+	shoppingAssistantSvcAddr string
 }
 
 func main() {
