@@ -6,7 +6,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install --only=production
+# also use npm ci --omit=dev or npm install --omit=dev
+RUN npm audit fix --force && npm ci --only=production   
 
 COPY . ./
 
