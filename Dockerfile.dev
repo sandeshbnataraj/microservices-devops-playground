@@ -1,8 +1,8 @@
 #FROM mcr.microsoft.com/dotnet/sdk:8.0
 #FROM golang:1.23
-FROM node:18-alpine
-
-RUN apk add --no-cache python3 make g++
+#FROM node:18-alpine
+#RUN apk add --no-cache python3 make g++
+FROM python:3.12
 
 COPY . .
 
