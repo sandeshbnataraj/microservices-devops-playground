@@ -3,7 +3,19 @@ stages:
   - test
   - deploy
 
-docker:build:shoppingassistantservice:
+docker:build:checkoutservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building shoppingassistantservice..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name checkoutservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:checkoutservice --push ./src/checkoutservice/
+
+.docker:build:shoppingassistantservice:
   stage: build
   image: docker:28.2
   services:
@@ -15,7 +27,7 @@ docker:build:shoppingassistantservice:
     - docker buildx create --name shoppingassistantservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:shoppingassistantservice --push ./src/shoppingassistantservice/
 
-docker:build:loadgenerator:
+.docker:build:loadgenerator:
   stage: build
   image: docker:28.2
   services:

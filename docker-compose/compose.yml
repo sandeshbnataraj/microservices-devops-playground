@@ -1,12 +1,111 @@
 services:
   
+  checkoutservice:
+    build:
+      context: ../src/checkoutservice/
+    restart: unless-stopped
+    depends_on:
+      - shippingservice
+      - productcatalogservice
+      - cartservice
+      - emailservice
+      - paymentservice
+    networks:
+      - front-tier
+    ports:
+      - 9229:80
+    environment:
+      SHIPPING_SERVICE_ADDR: shippingservice:50051
+      PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
+      CART_SERVICE_ADDR: cartservice:80
+      CURRENCY_SERVICE_ADDR: currencyservice:7000
+      EMAIL_SERVICE_ADDR: emailservice:8081
+      PAYMENT_SERVICE_ADDR: paymentservice:7001
+  
+  paymentservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:paymentservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 7001:7001
+    environment:
+      - PORT=7001
+      - DISABLE_PROFILER=true
+      #- ENABLE_TRACING="0"
+
+  emailservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:emailservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 8081:8081
+    environment:
+      - PORT=8081
+      #- GCP_PROJECT_ID=""
+      #- DISABLE_PROFILER=""
+      #- ENABLE_TRACING="0"
+
+  currencyservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:currencyservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 7000:7000
+    environment:
+      - PORT=7000
+      - DISABLE_PROFILER=true
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "secret"]
+    ports:
+      - 6379:6379
+    networks:
+      - front-tier
+
+  cartservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:cartservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 9000:80
+    environment:
+      REDIS_ADDR: redis:6379,password=secret,defaultDatabase=1
+      #SPANNER_PROJECT:
+      #SPANNER_CONNECTION_STRING:
+      #ALLOYDB_PRIMARY_IP:
+
+  productcatalogservice:
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:productcatalogservice
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 3550:3550
+    environment:
+      PORT: 3550
+      #ENABLE_TRACING: 0
+      #DISABLE_PROFILER: ""
+      #EXTRA_LATENCY: ""
+      #COLLECTOR_SERVICE_ADDR: 
+
   shippingservice:
-    #build:
-    #  context: ./src/shippingservice
-    #  dockerfile: Dockerfile
-    #image: 
+    image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:shippingservice
     restart: unless-stopped
     networks:
       - front-tier
     ports:
       - 50051:50051
+    environment:
+      PORT: 50051
+      #DISABLE_TRACING:
+      #DISABLE_PROFILER:
+      #DISABLE_STATS:
+
+networks:
+  front-tier:
