@@ -3,6 +3,17 @@ stages:
   - test
   - deploy
 
+docker:build:cartservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building shippins service..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name cartservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:cartservice --push ./src/cartservice/src/
 
 .docker:build:currencyservice:
   stage: build
@@ -40,7 +51,7 @@ stages:
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
 
-dev:playground:
+.dev:playground:
   stage: build
   image: docker:28.2
   services:
