@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-docker:build:cartservice:
+.docker:build:cartservice:
   stage: build
   image: docker:28.2
   services:
@@ -51,16 +51,16 @@ docker:build:cartservice:
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
 
-.dev:playground:
+dev:playground:
   stage: build
   image: docker:28.2
   services:
     - docker:28.2-dind
   variables:
-    ENV_IMAGE: dotnet #python #node #golang
+    IMAGE_TAG: dotnet #python #node #golang
   script:    # glpat-xJo7r55bCB5xgz8eSJAU   registry.gitlab.com/sandesh-lab/microservices-demo/dev-playground:latest
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock" 
     - docker buildx create --name my-builder --driver docker-container --bootstrap --use
     - docker buildx inspect
-    - docker buildx build --tag $CI_REGISTRY_IMAGE/dev-playground/"${ENV_IMAGE}" --push -f Dockerfile.dev .
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/dev-playground:"${IMAGE_TAG}" --push -f Dockerfile.dev .
