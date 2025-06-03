@@ -23,7 +23,7 @@ services:
       - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8082
       - CHECKOUT_SERVICE_ADDR=checkoutservice:80
       - SHIPPING_SERVICE_ADDR=shippingservice:50051
-      - AD_SERVICE_ADDR=
+      - AD_SERVICE_ADDR=adservice:9555
       #- SHOPPING_ASSISTANT_SERVICE_ADDR=
 
   adservice:
@@ -31,6 +31,12 @@ services:
     restart: unless-stopped
     networks:
       - front-tier
+    ports:
+      - 9555:9555
+    environment:
+      - PORT=9555
+      #- DISABLE_STATS=""
+      #- DISABLE_TRACING=""
     
   #shoppingassistantservice:
   #  image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:shoppingassistantservice

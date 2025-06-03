@@ -3,6 +3,18 @@ stages:
   - test
   - deploy
 
+docker:build:adservice:
+  stage: build
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building shoppingassistantservice..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker buildx create --name adservice-build --driver docker-container --use --bootstrap
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:adservice --push ./src/adservice/
+
 .docker:build:recommendationservice:
   stage: build
   image: docker:28.2
@@ -123,7 +135,7 @@ stages:
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:shippingservice --push ./src/shippingservice
 
-dev:playground:
+.dev:playground:
   stage: build
   image: docker:28.2
   services:
