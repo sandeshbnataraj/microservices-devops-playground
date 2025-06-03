@@ -57,7 +57,7 @@ dev:playground:
   services:
     - docker:28.2-dind
   variables:
-    IMAGE_TAG: dotnet #python #node #golang
+    IMAGE_TAG: python #node #golang
   script:    # glpat-xJo7r55bCB5xgz8eSJAU   registry.gitlab.com/sandesh-lab/microservices-demo/dev-playground:latest
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock" 
