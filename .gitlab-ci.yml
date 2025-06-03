@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-docker:build:checkoutservice:
+.docker:build:checkoutservice:
   stage: build
   image: docker:28.2
   services:
@@ -75,7 +75,7 @@ docker:build:checkoutservice:
     - docker buildx create --name cartservice-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:cartservice --push ./src/cartservice/src/
 
-.docker:build:currencyservice:
+docker:build:currencyservice:
   stage: build
   image: docker:28.2
   services:
@@ -85,9 +85,9 @@ docker:build:checkoutservice:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
     - docker buildx create --name currencyservice-build --driver docker-container --use --bootstrap
-    - docker buildx build --tag $CI_REGISTRY_IMAGE/currencyservice --push ./src/currencyservice
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:currencyservice --push ./src/currencyservice
 
-.docker:build:productcatalogservice:
+docker:build:productcatalogservice:
   stage: build
   image: docker:28.2
   services:
@@ -97,9 +97,9 @@ docker:build:checkoutservice:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
     - docker buildx create --name productcatalogservice-build --driver docker-container --use --bootstrap
-    - docker buildx build --tag $CI_REGISTRY_IMAGE/productcatalogservice --push ./src/productcatalogservice
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:productcatalogservice --push ./src/productcatalogservice
 
-.docker:build:shippingservice:
+docker:build:shippingservice:
   stage: build
   image: docker:28.2
   services:
@@ -109,7 +109,7 @@ docker:build:checkoutservice:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
     - docker buildx create --name shippingservice-build --driver docker-container --use --bootstrap
-    - docker buildx build --tag $CI_REGISTRY_IMAGE/shippingservice --push ./src/shippingservice
+    - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:shippingservice --push ./src/shippingservice
 
 .dev:playground:
   stage: build
