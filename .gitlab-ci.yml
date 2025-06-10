@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-docker:build:frontend:
+.docker:build:frontend:
   stage: build
   image: docker:28.2
   services:
@@ -15,7 +15,7 @@ docker:build:frontend:
     - docker buildx create --name frontend-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:frontend --push ./src/frontend/
 
-.docker:build:adservice:
+docker:build:adservice:
   stage: build
   image: docker:28.2
   services:

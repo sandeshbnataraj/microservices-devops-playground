@@ -1,5 +1,48 @@
 services:
   
+  reverse-proxy:
+    image: traefik:v3.4.1
+    restart: unless-stopped
+    networks:
+      - front-tier
+    ports:
+      - 80:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+    volumes:
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro"   # :ro read only
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=PathPrefix(`/dashboard`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      endpoint_mode: VIP
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
+
+
   frontend:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:frontend
     restart: unless-stopped
@@ -8,6 +51,71 @@ services:
       - currencyservice
       - cartservice
       - checkoutservice
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_healthz"]
+      interval: 15s
+      timeout: 30s
+      retries: 5
+      #start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.front.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.front.entrypoints=web"
+      - "traefik.http.routers.front.service=servicefront"
+      
+      - "traefik.http.routers.healthz.rule=PathPrefix(`/_healthz`)"
+      - "traefik.http.routers.healthz.entrypoints=web"
+      - "traefik.http.routers.healthz.service=servicefront"
+
+      - "traefik.http.services.servicefront.loadbalancer.server.port=8080"
+      - "traefik.http.services.servicefront.loadbalancer.healthcheck.path=/_healthz"
+      - "traefik.http.services.servicefront.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.servicefront.loadbalancer.healthcheck.timeout=5s"
+    #develop:
+    #  watch:
+    #    - path: ./
+    #      action: sync+restart
+    #      target: /etc/traefik
+          # exec: only when sync+exec
+          #ignore:
+          #include:
+    deploy:
+      labels:
+        - "traefik.enable=true"
+      
+        - "traefik.http.routers.front.rule=PathPrefix(`/`)"
+        - "traefik.http.routers.front.entrypoints=web"
+        - "traefik.http.routers.front.service=servicefront"
+        
+        - "traefik.http.routers.healthz.rule=PathPrefix(`/_healthz`)"
+        - "traefik.http.routers.healthz.entrypoints=web"
+        - "traefik.http.routers.healthz.service=servicefront"
+
+        - "traefik.http.services.servicefront.loadbalancer.server.port=8080"
+        - "traefik.http.services.servicefront.loadbalancer.healthcheck.path=/_healthz"
+        - "traefik.http.services.servicefront.loadbalancer.healthcheck.interval=10s"
+        - "traefik.http.services.servicefront.loadbalancer.healthcheck.timeout=5s"
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
     networks:
       - front-tier
     ports:
@@ -16,13 +124,13 @@ services:
       #- BASE_URL=""
       #- ENABLE_TRACING="0"
       #- ENABLE_PROFILER="0"
-      - LISTEN_ADDR="0.0.0.0"
+      - LISTEN_ADDR=0.0.0.0
       - PORT=8080
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
       - CURRENCY_SERVICE_ADDR=currencyservice:7000
-      - CART_SERVICE_ADDR=cartservice:80
+      - CART_SERVICE_ADDR=cartservice:8080
       - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8082
-      - CHECKOUT_SERVICE_ADDR=checkoutservice:80
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050
       - SHIPPING_SERVICE_ADDR=shippingservice:50051
       - AD_SERVICE_ADDR=adservice:9555
       #- SHOPPING_ASSISTANT_SERVICE_ADDR=
@@ -32,12 +140,31 @@ services:
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 9555:9555
     environment:
       - PORT=9555
       #- DISABLE_STATS=""
       #- DISABLE_TRACING=""
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
     
   #shoppingassistantservice:
   #  image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:shoppingassistantservice
@@ -51,8 +178,6 @@ services:
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 8082:8082
     environment:
       #- GCP_PROJECT_ID=""
       #- DISABLE_PROFILER=""
@@ -60,6 +185,27 @@ services:
       #- COLLECTOR_SERVICE_ADDR=""
       - PORT=8082
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   checkoutservice:
     #build:
@@ -74,51 +220,137 @@ services:
       - paymentservice
     networks:
       - front-tier
-    ports:
-      - 9229:80
+    #ports:
+    #  - 9229:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.checkout-grpc.rule=PathPrefix(`/checkout.CheckoutService`)"
+      - "traefik.http.routers.checkout-grpc.entrypoints=web"
+      - "traefik.http.routers.checkout-grpc.service=checkout-grpc"
+    #  - "traefik.http.routers.checkout-grpc.protocol=h2c"  # error "field not found, node: protocol"
+      - "traefik.http.services.checkout-grpc.loadbalancer.server.scheme=h2c" # to exponse grpc for debug
+      - "traefik.http.services.checkout-grpc.loadbalancer.server.port=5050"
     environment:
       SHIPPING_SERVICE_ADDR: shippingservice:50051
       PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550
-      CART_SERVICE_ADDR: cartservice:80
+      CART_SERVICE_ADDR: cartservice:8080
       CURRENCY_SERVICE_ADDR: currencyservice:7000
       EMAIL_SERVICE_ADDR: emailservice:8081
       PAYMENT_SERVICE_ADDR: paymentservice:7001
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
   
   paymentservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:paymentservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 7001:7001
     environment:
       - PORT=7001
       - DISABLE_PROFILER=true
       #- ENABLE_TRACING="0"
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   emailservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:emailservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 8081:8081
     environment:
       - PORT=8081
       #- GCP_PROJECT_ID=""
       #- DISABLE_PROFILER=""
       #- ENABLE_TRACING="0"
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   currencyservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:currencyservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 7000:7000
     environment:
       - PORT=7000
       - DISABLE_PROFILER=true
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   redis:
     image: redis:8-alpine
@@ -128,46 +360,126 @@ services:
       - 6379:6379
     networks:
       - front-tier
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   cartservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:cartservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 9000:80
+    #ports:
+    #  - 9000:80
     environment:
       REDIS_ADDR: redis:6379,password=secret,defaultDatabase=1
       #SPANNER_PROJECT:
       #SPANNER_CONNECTION_STRING:
       #ALLOYDB_PRIMARY_IP:
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   productcatalogservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:productcatalogservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 3550:3550
     environment:
       PORT: 3550
       #ENABLE_TRACING: 0
       #DISABLE_PROFILER: ""
       #EXTRA_LATENCY: ""
       #COLLECTOR_SERVICE_ADDR: 
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
   shippingservice:
     image: registry.gitlab.com/sandesh-lab/microservices-demo/deploy:shippingservice
     restart: unless-stopped
     networks:
       - front-tier
-    ports:
-      - 50051:50051
     environment:
       PORT: 50051
       #DISABLE_TRACING:
       #DISABLE_PROFILER:
       #DISABLE_STATS:
+    deploy:
+      endpoint_mode: VIP
+      replicas: 1
+      mode: replicated
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 10s
+      rollback_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: pause
+        monitor: 5s
+        order: start-first
+      update_config:
+        parallelism: 2
+        delay: 5s
+        failure_action: rollback
+        monitor: 5s
+        order: start-first
 
 networks:
   front-tier:
