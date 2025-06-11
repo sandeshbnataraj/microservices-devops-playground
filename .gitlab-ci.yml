@@ -24,7 +24,7 @@ adservice:build:
     - docker buildx inspect
     - | 
       docker buildx build \
-        --output type=local,dest=build-out \
+        --output type=local,dest=./src/adservice/build-out \
         -f ./src/adservice/Dockerfile.build \
         ./src/adservice/
     - ls -la
@@ -34,6 +34,8 @@ adservice:build:
 
 adservice:runtime:build:
   stage: build
+  needs:
+    - adservice:build
   script:
     - echo "runtime build of adservice"
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
