@@ -20,6 +20,8 @@ docker:build:adservice:
   image: docker:28.2
   services:
     - docker:28.2-dind
+  before_script:
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes  # for QUEM emualtion; Requires privileged: true in your GitLab job config.
   script:
     - echo "building shoppingassistantservice..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY

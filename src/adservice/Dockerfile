@@ -12,13 +12,13 @@ COPY . .
 RUN chmod +x ./gradlew
 RUN ./gradlew installDist
 
-#FROM --platform=$BUILDPLATFORM gcr.io/distroless/java21-debian12 AS prod
+FROM gcr.io/distroless/java21-debian12 AS prod
 #wont work here because the distroless has no other tools evcep app runtime!
 #ARG BUILDPLATFORM
 ##ARG TARGETPLATFORM
 #RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
-
-FROM eclipse-temurin:21.0.5_11-jre-alpine@sha256:4300bfe1e11f3dfc3e3512f39939f9093cf18d0e581d1ab1ccd0512f32fe33f0
+#glpat-q9LSkcSpNXetmRMhyucK
+#FROM eclipse-temurin:21.0.5_11-jre-alpine@sha256:4300bfe1e11f3dfc3e3512f39939f9093cf18d0e581d1ab1ccd0512f32fe33f0
 
 WORKDIR /app
 
