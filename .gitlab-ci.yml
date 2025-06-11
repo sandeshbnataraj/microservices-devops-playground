@@ -10,6 +10,8 @@ default:
 
 adservice:build:
   stage: build
+  before_script:
+    - cd ./src/adservice/   # change dir to add service microservice path
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - |
@@ -27,7 +29,7 @@ adservice:build:
         --platform linux/amd64,linux/arm64 \
         --output type=local,dest=/build-out \
         -f Dockerfile.build \
-        ./src/adservice/
+        .
     - ls -la
   artifacts:
     paths:
