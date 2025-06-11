@@ -3,6 +3,38 @@ stages:
   - test
   - deploy
 
+default:
+  image: docker:28.2
+  services:
+    - docker:28.2-dind
+
+adservice:build:
+  stage: build
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      docker context use default || \
+        docker context create default --docker "host=unix:///var/run/docker.sock"
+    - |
+      docker buildx create \
+        --name mybuilder \
+        --driver docker-container \
+        --bootstrap \
+        --use
+    - docker buildx inspect
+    - | 
+      docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        --output type=local,dest=/build-out \
+        -f Dockerfile.build \
+        ./src/adservice/
+    - ls -la
+  artifacts:
+    paths:
+      - /build-out
+
+
+
 .docker:build:frontend:
   stage: build
   image: docker:28.2
@@ -15,7 +47,7 @@ stages:
     - docker buildx create --name frontend-build --driver docker-container --use --bootstrap
     - docker buildx build --tag $CI_REGISTRY_IMAGE/deploy:frontend --push ./src/frontend/
 
-docker:build:adservice:
+.docker:build:adservice:
   stage: build
   image: docker:28.2
   services:
