@@ -10,8 +10,6 @@ default:
 
 adservice:build:
   stage: build
-  before_script:
-    - cd ./src/adservice/   # change dir to add service microservice path
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - |
@@ -26,15 +24,36 @@ adservice:build:
     - docker buildx inspect
     - | 
       docker buildx build \
-        --platform linux/amd64,linux/arm64 \
-        --output type=local,dest=/build-out \
-        -f Dockerfile.build \
-        .
+        --output type=local,dest=build-out \
+        -f ./src/adservice/Dockerfile.build \
+        ./src/adservice/
     - ls -la
   artifacts:
     paths:
-      - /build-out
+      - ./src/adservice/build-out
 
+adservice:runtime:build:
+  stage: build
+  script:
+    - echo "runtime build of adservice"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker context default use || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - |
+      docker buildx create \
+        --name runtime-build \
+        --driver docker-container \
+        --bootstrap \
+        --use
+    - docker buildx inspect
+    - |
+      docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA \
+        --build-context gitlab-artifact=./src/adservice/build-out \
+        -f ./src/adservice/Dockerfile.runtime \
+        --push \
+        --sbom=true \
+        --provenance=true
 
 
 .docker:build:frontend:
