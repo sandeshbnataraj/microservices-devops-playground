@@ -48,10 +48,7 @@ adservice:runtime:build:
         --use
     - docker buildx inspect
     - |
-      docker buildx build \
-        --platform linux/amd64,linux/arm64 \
-        --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA \
-        --build-context gitlab-artifact=./src/adservice/build-out \
+      docker buildx build --platform linux/amd64,linux/arm64 --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA --build-context gitlab-artifact=./src/adservice/build-out \
         -f ./src/adservice/Dockerfile.runtime \
         --push \
         --sbom=true \
