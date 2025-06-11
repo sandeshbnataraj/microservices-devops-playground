@@ -10,6 +10,9 @@ RUN ./gradlew installDist
 
 EXPOSE 9555
 
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+
 FROM --platform=$BUILDPLATFORM gcr.io/distroless/java21-debian12 AS prod
 
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
