@@ -12,9 +12,9 @@ EXPOSE 9555
 
 FROM --platform=$BUILDPLATFORM gcr.io/distroless/java21-debian12 AS prod
 
-ARG BUILDPLATFORM
-ARG TARGETPLATFORM
-RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
+#ARG BUILDPLATFORM
+##ARG TARGETPLATFORM
+#RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 
 WORKDIR /app
 
