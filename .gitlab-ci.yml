@@ -39,7 +39,7 @@ adservice:runtime:build:
   script:
     - echo "runtime build of adservice"
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker context default use || docker context create default --docker "host=unix:///var/run/docker.sock"
+    - docker context use default || docker context create default --docker "host=unix:///var/run/docker.sock"
     - |
       docker buildx create \
         --name runtime-build \
