@@ -8,6 +8,8 @@ default:
 
 adservice:build:
   stage: build
+  services:
+    - docker:28.2-dind
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - |
