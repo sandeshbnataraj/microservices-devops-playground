@@ -50,6 +50,8 @@ adservice:runtime:build:
     - docker:28.2-dind
   needs:
     - adservice:build
+  before_script:
+    - ls -la ./src/adservice/build
   script:
     - echo "runtime build of adservice"
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -62,7 +64,13 @@ adservice:runtime:build:
         --use
     - docker buildx inspect
     - |
-      docker buildx build --platform linux/amd64,linux/arm64 --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA --build-context gitlab-artifact=./src/adservice/build -f ./src/adservice/Dockerfile.runtime --push ./src/adservice/
+      docker buildx build \
+      --platform linux/amd64,linux/arm64 \
+      --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA \
+      --build-context gitlab-artifact=./src/adservice/build \
+      -f ./src/adservice/Dockerfile.runtime \
+      --push \
+      ./src/adservice/
 
 .docker:build:frontend:
   stage: build
