@@ -6,7 +6,31 @@ stages:
 default:
   image: docker:28.2
 
-adservice:build:
+cartservice:buikd:
+  stage: build
+  services:
+    - docker:28.2-dind
+  script:
+    - echo "building cartservice"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      docker context use default || \
+        docker context create default --docker "host=unix:///var/run/docker.sock"
+    - |
+      docker buildx create \
+        --name cartbuilder \
+        --driver docker-container \
+        --bootstrap \
+        --use
+    - docker cbuildx inspect
+    - |
+      docker buildx build \
+        --tag $CI_REGISTRY_IMAGE/cartservice:$CI_COMMIT_SHORT_SHA \
+        --push \
+        ./src/cartservice/src/
+
+
+.adservice:build:
   stage: build
   services:
     - docker:28.2-dind
@@ -32,7 +56,7 @@ adservice:build:
     paths:
       - ./src/adservice/build
 
-.adservice:build:
+.adservice:build1:
   stage: build
   image: eclipse-temurin:21.0.5_11-jdk@sha256:a20cfa6afdbf57ff2c4de77ae2d0e3725a6349f1936b5ad7c3d1b06f6d1b840a
   script:
@@ -46,7 +70,7 @@ adservice:build:
     paths:
       - ./src/adservice/build
 
-adservice:runtime:build:
+.adservice:runtime:build:
   stage: build
   services:
     - docker:28.2-dind
