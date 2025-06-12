@@ -67,8 +67,7 @@ adservice:runtime:build:
         --tag $CI_REGISTRY_IMAGE/adservice:$CI_COMMIT_SHORT_SHA \
         --build-context gitlab-artifact=./src/adservice/build \
         -f ./src/adservice/Dockerfile.runtime \
-        --push 
-
+        --push .
 
 .docker:build:frontend:
   stage: build
