@@ -22,7 +22,7 @@ cartservice:buikd:
         --driver docker-container \
         --bootstrap \
         --use
-    - docker cbuildx inspect
+    - docker buildx inspect
     - |
       docker buildx build \
         --tag $CI_REGISTRY_IMAGE/cartservice:$CI_COMMIT_SHORT_SHA \
