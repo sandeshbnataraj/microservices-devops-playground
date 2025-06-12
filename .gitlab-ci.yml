@@ -6,7 +6,7 @@ stages:
 default:
   image: docker:28.2
 
-.adservice:build:
+adservice:build:
   stage: build
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -22,15 +22,15 @@ default:
     - docker buildx inspect
     - | 
       docker buildx build \
-        --output type=local,dest=./src/adservice/build-out \
+        --output type=local,dest=./src/adservice/build \
         -f ./src/adservice/Dockerfile.build \
         ./src/adservice/
     - ls -la
   artifacts:
     paths:
-      - ./src/adservice/build-out
+      - ./src/adservice/build
 
-adservice:build:
+.adservice:build:
   stage: build
   image: eclipse-temurin:21.0.5_11-jdk@sha256:a20cfa6afdbf57ff2c4de77ae2d0e3725a6349f1936b5ad7c3d1b06f6d1b840a
   script:
