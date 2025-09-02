@@ -17,7 +17,6 @@ RUN ./gradlew installDist
 #ARG BUILDPLATFORM
 ##ARG TARGETPLATFORM
 #RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
-#glpat-q9LSkcSpNXetmRMhyucK
 FROM eclipse-temurin:21.0.5_11-jre-alpine@sha256:4300bfe1e11f3dfc3e3512f39939f9093cf18d0e581d1ab1ccd0512f32fe33f0
 
 WORKDIR /app
