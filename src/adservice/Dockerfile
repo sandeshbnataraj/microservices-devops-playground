@@ -2,7 +2,7 @@ FROM --platform=$BUILDPLATFORM eclipse-temurin:21.0.5_11-jdk@sha256:a20cfa6afdbf
 
 WORKDIR /app
 
-# Only copy what's needed to download dependencies
+#Only copy what's needed to download dependencies
 COPY build.gradle gradlew ./
 COPY gradle gradle
 RUN chmod +x ./gradlew
